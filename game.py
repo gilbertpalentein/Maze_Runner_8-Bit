@@ -1,8 +1,6 @@
 import logic
 import random
 import pygame
-import time
-import queue
 from collections import deque
 from graph import Graph
 from character import Character
