@@ -1,13 +1,5 @@
 from game import runGame
-from graph import Graph
-from character import Character
 import ui_file
-import logic
-import random
-import pygame
-import time
-import queue
-from collections import deque
 import os
 
 
