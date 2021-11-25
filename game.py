@@ -80,79 +80,34 @@ def draw_maze (screen, maze, size, colour, side_length, border_width):
                 if maze.is_edge(((i, j), (i - 1, j))):
                     # if connected, draw the grid unit without the left wall
                     pygame.draw.rect(screen, colour,
-                                     [(side_length + border_width) * i, border_width + (side_length + border_width) * j, \
+                                     [(side_length + border_width) * i, border_width + (side_length + border_width) * j,
                                       side_length + border_width, side_length])
             # if the vertex is not at the right-most side of the map
             if i != size - 1:
                 if maze.is_edge(((i, j), (i + 1, j))):
                     # draw the grid unit without the right wall (extend by border_width)
-                    pygame.draw.rect(screen, colour, [border_width + (side_length + border_width) * i, \
+                    pygame.draw.rect(screen, colour, [border_width + (side_length + border_width) * i,
                                                       border_width + (side_length + border_width) * j,
                                                       side_length + border_width, side_length])
             # if the vertex is not at the top-most side of the map
             if j != 0:
                 if maze.is_edge(((i, j), (i, j - 1))):
-                    pygame.draw.rect(screen, colour, [border_width + (side_length + border_width) * i, \
+                    pygame.draw.rect(screen, colour, [border_width + (side_length + border_width) * i,
                                                       (side_length + border_width) * j, side_length,
                                                       side_length + border_width])
             # if the vertex is not at the bottom-most side of the map
             if j != size - 1:
                 if maze.is_edge(((i, j), (i, j + 1))):
-                    pygame.draw.rect(screen, colour, [border_width + (side_length + border_width) * i, \
+                    pygame.draw.rect(screen, colour, [border_width + (side_length + border_width) * i,
                                                       border_width + (side_length + border_width) * j, side_length,
                                                       side_length + border_width])
 
 
 # draw position of grid unit
 def draw_position (screen, side_length, border_width, current_point, colour):
-    pygame.draw.rect(screen, colour, [border_width + (side_length + border_width) * current_point[0], \
+    pygame.draw.rect(screen, colour, [border_width + (side_length + border_width) * current_point[0],
                                       border_width + (side_length + border_width) * current_point[1], side_length,
                                       side_length])
-
-
-# takes in a player2 character, maze, vertices, cooldown, and timer
-def playerTwo (player2, maze, vertices, cooldown, timer):
-    # get the pressed keys
-    keys = pygame.key.get_pressed()
-
-    if (pygame.time.get_ticks() - timer > cooldown):
-        current_point = player2.get_current_position()
-        # move character right
-        if keys[pygame.K_d]:
-            # check if the next point is in the maze
-            if (current_point[0] + 1, current_point[1]) in vertices:
-                next_point = (current_point[0] + 1, current_point[1])
-                # check if the next point is connected by an edge
-                if (maze.is_edge((current_point, next_point))):
-                    player2.move_character_smooth(next_point, 5)
-            # restart cooldown timer
-            timer = pygame.time.get_ticks()
-        # move character left
-        if keys[pygame.K_a]:
-            if (current_point[0] - 1, current_point[1]) in vertices:
-                next_point = (current_point[0] - 1, current_point[1])
-                if (maze.is_edge((current_point, next_point))):
-                    player2.move_character_smooth(next_point, 5)
-            # restart cooldown timer
-            timer = pygame.time.get_ticks()
-        # move character up
-        if keys[pygame.K_w]:
-            if (current_point[0], current_point[1] - 1) in vertices:
-                next_point = (current_point[0], current_point[1] - 1)
-                if (maze.is_edge((current_point, next_point))):
-                    player2.move_character_smooth(next_point, 5)
-            # restart cooldown timer
-            timer = pygame.time.get_ticks()
-        # move character down
-        if keys[pygame.K_s]:
-            if (current_point[0], current_point[1] + 1) in vertices:
-                next_point = (current_point[0], current_point[1] + 1)
-                if (maze.is_edge((current_point, next_point))):
-                    player2.move_character_smooth(next_point, 5)
-            # restart cooldown timer
-            timer = pygame.time.get_ticks()
-
-    return timer
 
 
 # update console function
@@ -179,14 +134,14 @@ def update_console (screen, screen_size, side_length, text_size, a_colour, na_co
 
 # run the maze game
 # takes in grid size and side length for the maze
-def runGame (grid_size, side_length):
+def runGame (grid_size, side_length, bot_speed, b1_search, b1_chase, b2_search, b2_chase):
     # initialize the game engine
     pygame.init()
 
     # Defining colours (RGB) ...
     BLACK = (0, 0, 0)
-    GRAY = (100, 100, 100)
-    DARKGRAY = (50, 50, 50)
+    YELLOW = (200, 200, 0)
+    PURPLE = (100, 0, 100)
     WHITE = (255, 255, 255)
     GOLD = (249, 166, 2)
     GREEN = (0, 255, 0)
@@ -206,7 +161,7 @@ def runGame (grid_size, side_length):
 
     # Opening a window ...
     # set the screen size to match the grid
-    size = (grid_size * (side_length + border_width) + border_width, \
+    size = (grid_size * (side_length + border_width) + border_width,
             grid_size * (side_length + border_width) + border_width + side_length * 3)
     screen = pygame.display.set_mode(size)
     pygame.display.set_caption("\"Esc\" to exit")
@@ -262,39 +217,36 @@ def runGame (grid_size, side_length):
     is2Computer = False
     if grid_size >= 30:
         is2Computer = True
-    # re-initialize character
-    player1 = Character(screen, side_length, border_width, vertices, start_point, \
+    # initialize player character
+    player1 = Character(screen, side_length, border_width, vertices, start_point,
                         end_point, start_point, GREEN, WHITE, True, unlock_keys, GOLD)
     # initialize computer character
-    computer_character = Character(screen, side_length, border_width, vertices, \
-                                   start_point, end_point, start_point, GRAY, WHITE)
+    computer_character = Character(screen, side_length, border_width, vertices,
+                                   start_point, end_point, start_point, YELLOW, WHITE)
     # initialize computer2 character
+    computer2_character: Character
     if is2Computer:
-        computer2_character = Character(screen, side_length, border_width, vertices, \
-                                       start_point, end_point, start_point, DARKGRAY, WHITE)
+        computer2_character = Character(screen, side_length, border_width, vertices,
+                                        start_point, end_point, start_point, PURPLE, WHITE)
     # create a deque for the paths to the player
     dq = deque()
+    dq2 = deque()
     # put start_point for the deque
     dq.append(start_point)
+    dq2.append(start_point)
     # set the cooldown for how fast the computer moves
-    computer_cooldown = grid_size * 100
-    # set the maximum cooldown for the computer
-    if computer_cooldown > 3000:
-        computer_cooldown = 3000
+    computer_cooldown = grid_size * (200 - bot_speed)
+    computer2_cooldown = grid_size * (200 - bot_speed)
     # set the initial wait time for the computer
     initial_wait = 3000
-    if is2Computer:
-        dq2 = deque()
-        dq2.append(start_point)
-        computer2_cooldown = computer_cooldown
-        isCom2Far = False
+    # for stalking chase mechanism
+    isCom1Far = False
+    isCom2Far = False
     # initialize timers
     computer_timer = pygame.time.get_ticks()
+    computer2_timer = pygame.time.get_ticks()
     initial_wait_timer = pygame.time.get_ticks()
-    # for computer2
-    if is2Computer:
-        computer2_timer = pygame.time.get_ticks()
-        initial_wait_timer2 = pygame.time.get_ticks()
+    initial_wait_timer2 = pygame.time.get_ticks()
 
     # draw the end-point
     draw_position(screen, side_length, border_width, end_point, RED)
@@ -329,7 +281,7 @@ def runGame (grid_size, side_length):
         # get the pressed keys
         keys = pygame.key.get_pressed()
 
-        if (pygame.time.get_ticks() - start_timer > cooldown):
+        if pygame.time.get_ticks() - start_timer > cooldown:
             # get the current point of character
             current_point = player1.get_current_position()
             # move character right
@@ -338,12 +290,17 @@ def runGame (grid_size, side_length):
                 if (current_point[0] + 1, current_point[1]) in vertices:
                     next_point = (current_point[0] + 1, current_point[1])
                     # check if the next point is connected by an edge
-                    if (maze.is_edge((current_point, next_point))):
+                    if maze.is_edge((current_point, next_point)):
                         player1.move_character_smooth(next_point, 5)
                         # update the shortest path for the computer to use
-                        dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
-                        if is2Computer:
-                            dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                        if b1_search == "BFS":
+                            dq = logic.update_path_bfs(computer_character.get_current_position(), next_point, maze, dq)
+                            if is2Computer:
+                                dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                        else:
+                            dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
+                            if is2Computer:
+                                dq2 = logic.update_path_a(computer2_character.get_current_position(), next_point, maze, dq2)
                     else:
                         # if the player pressed the space key, break the wall in the direction they are moving in
                         if keys[pygame.K_SPACE] and player1.get_wallBreaks() > 0:
@@ -353,21 +310,31 @@ def runGame (grid_size, side_length):
                             # decrement the player's number of wallBreaks
                             player1.use_wallBreak()
                             # update the shortest path for the computer to use
-                            dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
-                            if is2Computer:
-                                dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                            if b1_search == "BFS":
+                                dq = logic.update_path_bfs(computer_character.get_current_position(), next_point, maze, dq)
+                                if is2Computer:
+                                    dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                            else:
+                                dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
+                                if is2Computer:
+                                    dq2 = logic.update_path_a(computer2_character.get_current_position(), next_point, maze, dq2)
                 # restart cooldown timer
                 start_timer = pygame.time.get_ticks()
             # move character left
             elif keys[pygame.K_LEFT]:
                 if (current_point[0] - 1, current_point[1]) in vertices:
                     next_point = (current_point[0] - 1, current_point[1])
-                    if (maze.is_edge((current_point, next_point))):
+                    if maze.is_edge((current_point, next_point)):
                         player1.move_character_smooth(next_point, 5)
                         # update the shortest path for the computer to use
-                        dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
-                        if is2Computer:
-                            dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                        if b1_search == "BFS":
+                            dq = logic.update_path_bfs(computer_character.get_current_position(), next_point, maze, dq)
+                            if is2Computer:
+                                dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                        else:
+                            dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
+                            if is2Computer:
+                                dq2 = logic.update_path_a(computer2_character.get_current_position(), next_point, maze, dq2)
                     else:
                         # if the player pressed the space key, break the wall in the direction they are moving in
                         if keys[pygame.K_SPACE] and player1.get_wallBreaks() > 0:
@@ -377,21 +344,31 @@ def runGame (grid_size, side_length):
                             # decrement the player's number of wallBreaks
                             player1.use_wallBreak()
                             # update the shortest path for the computer to use
-                            dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
-                            if is2Computer:
-                                dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                            if b1_search == "BFS":
+                                dq = logic.update_path_bfs(computer_character.get_current_position(), next_point, maze, dq)
+                                if is2Computer:
+                                    dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                            else:
+                                dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
+                                if is2Computer:
+                                    dq2 = logic.update_path_a(computer2_character.get_current_position(), next_point, maze, dq2)
                 # restart cooldown timer
                 start_timer = pygame.time.get_ticks()
             # move character up
             elif keys[pygame.K_UP]:
                 if (current_point[0], current_point[1] - 1) in vertices:
                     next_point = (current_point[0], current_point[1] - 1)
-                    if (maze.is_edge((current_point, next_point))):
+                    if maze.is_edge((current_point, next_point)):
                         player1.move_character_smooth(next_point, 5)
                         # update the shortest path for the computer to use
-                        dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
-                        if is2Computer:
-                            dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                        if b1_search == "BFS":
+                            dq = logic.update_path_bfs(computer_character.get_current_position(), next_point, maze, dq)
+                            if is2Computer:
+                                dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                        else:
+                            dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
+                            if is2Computer:
+                                dq2 = logic.update_path_a(computer2_character.get_current_position(), next_point, maze, dq2)
                     else:
                         # if the player pressed the space key, break the wall in the direction they are moving in
                         if keys[pygame.K_SPACE] and player1.get_wallBreaks() > 0:
@@ -401,21 +378,31 @@ def runGame (grid_size, side_length):
                             # decrement the player's number of wallBreaks
                             player1.use_wallBreak()
                             # update the shortest path for the computer to use
-                            dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
-                            if is2Computer:
-                                dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                            if b1_search == "BFS":
+                                dq = logic.update_path_bfs(computer_character.get_current_position(), next_point, maze, dq)
+                                if is2Computer:
+                                    dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                            else:
+                                dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
+                                if is2Computer:
+                                    dq2 = logic.update_path_a(computer2_character.get_current_position(), next_point, maze, dq2)
                 # restart cooldown timer
                 start_timer = pygame.time.get_ticks()
             # move character down
             elif keys[pygame.K_DOWN]:
                 if (current_point[0], current_point[1] + 1) in vertices:
                     next_point = (current_point[0], current_point[1] + 1)
-                    if (maze.is_edge((current_point, next_point))):
+                    if maze.is_edge((current_point, next_point)):
                         player1.move_character_smooth(next_point, 5)
                         # update the shortest path for the computer to use
-                        dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
-                        if is2Computer:
-                            dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                        if b1_search == "BFS":
+                            dq = logic.update_path_bfs(computer_character.get_current_position(), next_point, maze, dq)
+                            if is2Computer:
+                                dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                        else:
+                            dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
+                            if is2Computer:
+                                dq2 = logic.update_path_a(computer2_character.get_current_position(), next_point, maze, dq2)
                     else:
                         if keys[pygame.K_SPACE] and player1.get_wallBreaks() > 0:
                             maze = logic.break_wall(maze, current_point, next_point)
@@ -424,9 +411,14 @@ def runGame (grid_size, side_length):
                             # decrement the player's number of wallBreaks
                             player1.use_wallBreak()
                             # update the shortest path for the computer to use
-                            dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
-                            if is2Computer:
-                                dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                            if b1_search == "BFS":
+                                dq = logic.update_path_bfs(computer_character.get_current_position(), next_point, maze, dq)
+                                if is2Computer:
+                                    dq2 = logic.update_path_bfs(computer2_character.get_current_position(), next_point, maze, dq2)
+                            else:
+                                dq = logic.update_path_a(computer_character.get_current_position(), next_point, maze, dq)
+                                if is2Computer:
+                                    dq2 = logic.update_path_a(computer2_character.get_current_position(), next_point, maze, dq2)
                 # restart cooldown timer
                 start_timer = pygame.time.get_ticks()
 
@@ -438,43 +430,61 @@ def runGame (grid_size, side_length):
         else:
             draw_position(screen, side_length, border_width, end_point, RED)
         # increase the computer speed if got another 2 keys
-        if player1.increase_computer_speed():
-            computer_cooldown = computer_cooldown / 2
-        # computer2 movement increase
-        if is2Computer:
-            if len(dq2) > 8 and not isCom2Far:
-                computer2_cooldown = computer2_cooldown/10
-                isCom2Far = True
-            elif isCom2Far:
-                computer2_cooldown = computer2_cooldown*10
-                isCom2Far = False
+        if b1_chase == "Steady":
             if player1.increase_computer_speed():
-                computer2_cooldown = computer2_cooldown*0.8
+                computer_cooldown = computer_cooldown / 2
+                if is2Computer and b2_chase == "Steady":
+                    computer2_cooldown = computer2_cooldown / 2
+                else:
+                    computer2_cooldown = computer2_cooldown * 0.8
+            if is2Computer and b2_chase == "Stalking":
+                if len(dq2) > 8 and not isCom2Far:
+                    computer2_cooldown = computer2_cooldown / 10
+                    isCom2Far = True
+                elif isCom2Far:
+                    computer2_cooldown = computer2_cooldown * 10
+                    isCom2Far = False
+        else:
+            if len(dq) > 8 and not isCom1Far:
+                computer_cooldown = computer_cooldown / 10
+                isCom1Far = True
+            elif isCom1Far:
+                computer_cooldown = computer_cooldown * 10
+                isCom1Far = False
+            if player1.increase_computer_speed():
+                computer_cooldown = computer_cooldown * 0.8
+                if is2Computer and b2_chase == "Steady":
+                    computer2_cooldown = computer2_cooldown / 2
+                else:
+                    computer2_cooldown = computer2_cooldown * 0.8
+            if is2Computer and b2_chase == "Stalking":
+                if len(dq2) > 8 and not isCom2Far:
+                    computer2_cooldown = computer2_cooldown / 10
+                    isCom2Far = True
+                elif isCom2Far:
+                    computer2_cooldown = computer2_cooldown * 10
+                    isCom2Far = False
         # update console
         update_console(screen, size, side_length, size[0] // grid_size, WHITE, BLACK, player1.get_keys_left(),
                        player1.get_wallBreaks())
 
         # update the wait condition
         waitCondition = pygame.time.get_ticks() - initial_wait_timer > initial_wait
-        if is2Computer:
-            waitCondition2 = pygame.time.get_ticks() - initial_wait_timer2 > initial_wait
+        waitCondition2 = pygame.time.get_ticks() - initial_wait_timer2 > initial_wait
         # check if the wait condition is met
-        if (waitCondition):
-            if (pygame.time.get_ticks() - computer_timer > computer_cooldown):
-                # make sure that the deque is not empty
-                if dq:
-                    computer_character.move_character_smooth(dq.popleft(), 5)
-                # reset the cooldown timer for computer
-                computer_timer = pygame.time.get_ticks()
+        if waitCondition and pygame.time.get_ticks() - computer_timer > computer_cooldown:
+            # make sure that the deque is not empty
+            if dq:
+                computer_character.move_character_smooth(dq.popleft(), 5)
+            # reset the cooldown timer for computer
+            computer_timer = pygame.time.get_ticks()
         # for computer2
-        if is2Computer:
-            if (waitCondition2):
-                if (pygame.time.get_ticks() - computer2_timer > computer2_cooldown):
-                    # make sure that the deque is not empty
-                    if dq2:
-                        computer2_character.move_character_smooth(dq2.popleft(), 10)
-                    # reset the cooldown timer for computer
-                    computer2_timer = pygame.time.get_ticks()
+        if is2Computer and waitCondition2 and pygame.time.get_ticks() - computer2_timer > computer2_cooldown:
+            # make sure that the deque is not empty
+            if dq2:
+                computer2_character.move_character_smooth(dq2.popleft(), 5)
+            # reset the cooldown timer for computer
+            computer2_timer = pygame.time.get_ticks()
 
         # redraw the characters
         computer_character.draw_position()
@@ -488,6 +498,7 @@ def runGame (grid_size, side_length):
         if player1.escaped():
             winner = 1
             carryOn = False
+        # lose condition
         elif computer_character.get_current_position() == player1.get_current_position() and waitCondition \
                 or is2Computer and computer2_character.get_current_position() == player1.get_current_position() and waitCondition2:
             winner = 2

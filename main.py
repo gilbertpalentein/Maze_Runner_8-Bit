@@ -18,19 +18,22 @@ if __name__ == "__main__":
     states = {0: "Main Menu", 1: "Gameplay"}
     current_state = states[0]
 
-    # initialize variables
-    grid_size = 0
-    side_length = 0
+    # initialize variables with default value
+    grid_size = 20
+    side_length = 10
+    bot_speed = 100
+    b1_search, b1_chase = "A*", "Steady"
+    b2_search, b2_chase = "BFS", "Stalking"
 
     # flag for main loop
     Run = True
 
     while Run:
         if current_state == states[0]:
-            Run, grid_size, side_length = ui_file.startScreen()
+            Run, grid_size, side_length, bot_speed, b1_search, b1_chase, b2_search, b2_chase = ui_file.startScreen(grid_size, side_length, bot_speed, b1_search, b1_chase, b2_search, b2_chase)
             current_state = states[1]
         elif current_state == states[1]:
-            value = runGame(grid_size, side_length)
+            value = runGame(grid_size, side_length, bot_speed, b1_search, b1_chase, b2_search, b2_chase)
             if value != -1:
                 ui_file.endGame(value)
 

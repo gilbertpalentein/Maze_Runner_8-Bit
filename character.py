@@ -5,6 +5,7 @@ Character class
 import pygame
 from time import sleep
 
+
 class Character:
 	# escape is a boolean for "escape mode", keys is a list of tuples (coordinates)
 	def __init__(self, screen, side_length, border_width, valid_points, start_point, end_point, current_position, a_colour, na_colour,\
